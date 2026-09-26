@@ -49,7 +49,6 @@ connectDB()
   })
   .catch((err) => {
     console.error('⚠️ Initial MongoDB Atlas connection pending/warning:', err.message);
-    // Start Express server so health endpoint and client requests function; ensureDbConnected will retry on incoming API requests
     app.listen(PORT, () => {
       console.log(`🚀 Placement Drive Tracker server running at http://localhost:${PORT} (Database connection initializing)`);
     });

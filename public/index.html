@@ -23,14 +23,16 @@
 
       <form id="login-form">
         <div class="form-group">
-          <label for="login-password-textarea" class="form-label">Access Password</label>
-          <textarea id="login-password-textarea" class="form-textarea login-textarea" rows="2" placeholder="Enter password " required></textarea>
+          <label for="login-password-input" class="form-label">Access Password</label>
+          <input type="password" id="login-password-input" class="form-input auth-input" placeholder="Enter password" autocomplete="current-password" required>
         </div>
+
         <div id="login-error-msg" class="login-error-alert" style="display: none;">
-           Incorrect password. Please try again!
+          Incorrect password. Please try again!
         </div>
+
         <button type="submit" class="btn btn-primary login-submit-btn" id="login-submit-btn">
-           Access Tracker
+          Access Tracker
         </button>
       </form>
     </div>
@@ -97,6 +99,10 @@
         </div>
 
         <div class="topbar-right">
+          <div class="user-badge" id="user-badge-display">
+            <span class="user-badge-icon">🎓</span>
+            <span class="user-badge-text" id="user-roll-display">23BQ1A0539</span>
+          </div>
           <button class="btn btn-primary" id="open-add-modal-btn">
             + Add Drive
           </button>

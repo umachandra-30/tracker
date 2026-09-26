@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadError: null,
     retryCount: 0,
     isFetching: false,
-    isLoggedIn: localStorage.getItem('ucsr_logged_in') === 'true'
+    // sessionStorage automatically clears when tab/window is closed or removed!
+    isLoggedIn: sessionStorage.getItem('ucsr_logged_in') === 'true'
   };
 
   // DOM Elements
@@ -26,10 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auth Elements
     loginPage: document.getElementById('login-page'),
     loginForm: document.getElementById('login-form'),
-    loginPasswordTextarea: document.getElementById('login-password-textarea'),
+    loginPasswordInput: document.getElementById('login-password-input'),
     loginErrorMsg: document.getElementById('login-error-msg'),
+    loginSubmitBtn: document.getElementById('login-submit-btn'),
     appContainer: document.getElementById('app-container'),
     logoutBtn: document.getElementById('logout-btn'),
+    userRollDisplay: document.getElementById('user-roll-display'),
 
     sidebar: document.getElementById('sidebar'),
     sidebarOverlay: document.getElementById('sidebar-overlay'),
@@ -209,6 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const res = await fetch('/api/drives');
+
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
           throw new Error(errBody.error || `HTTP ${res.status}: Failed to load placement drives`);
@@ -386,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.dashboardContent.innerHTML = `
       <table class="dashboard-table">
         <tbody>
+          <tr><td class="stat-name">Roll Number</td><td class="stat-count">23BQ1A0539</td></tr>
           <tr><td class="stat-name">Total Drives</td><td class="stat-count">${state.drives.length}</td></tr>
           <tr><td class="stat-name">Campus Drives</td><td class="stat-count">${campusCount}</td></tr>
           <tr><td class="stat-name">Beyond Drives</td><td class="stat-count">${beyondCount}</td></tr>
@@ -398,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
-  // 2. Campus Drive View (Shows ALL Campus Drives including expired ones)
+  // 2. Campus Drive View
   function renderCampusDrives() {
     if (state.isLoading && !state.hasLoadedOnce) {
       elements.emptyCampus.style.display = 'none';
@@ -413,7 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Filter all Campus Drives (default category is Campus Drive)
     const campusDrives = state.drives.filter(d => (d.driveType || 'Campus Drive') === 'Campus Drive');
 
     if (campusDrives.length === 0) {
@@ -517,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 5. Resume Section View (ONLY Company Name & Resume Link)
+  // 5. Resume Section View
   function renderResumeView() {
     if (state.isLoading && !state.hasLoadedOnce) {
       elements.emptyResume.style.display = 'none';
@@ -851,38 +855,28 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Login Form Submit Handler
+    // Single Login Form Handler (Password: 2330)
     if (elements.loginForm) {
       elements.loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const inputPassword = elements.loginPasswordTextarea.value.trim();
+        const inputPassword = elements.loginPasswordInput.value.trim();
 
-        if (inputPassword === '0539') {
-          localStorage.setItem('ucsr_logged_in', 'true');
+        if (inputPassword === '2330') {
+          // sessionStorage automatically clears session when tab or browser is closed/removed!
+          sessionStorage.setItem('ucsr_logged_in', 'true');
           state.isLoggedIn = true;
           if (elements.loginErrorMsg) elements.loginErrorMsg.style.display = 'none';
-          elements.loginPasswordTextarea.value = '';
+          elements.loginPasswordInput.value = '';
           checkAuthStatus();
           showToast('Access Granted! Welcome back.', 'success');
         } else {
           if (elements.loginErrorMsg) {
             elements.loginErrorMsg.style.display = 'block';
-            // Trigger restart of shake animation
             elements.loginErrorMsg.style.animation = 'none';
-            elements.loginErrorMsg.offsetHeight; // Trigger reflow
+            elements.loginErrorMsg.offsetHeight;
             elements.loginErrorMsg.style.animation = 'shake 0.3s ease';
           }
-          showToast('Incorrect Password! (Password must be 0539)', 'error');
-        }
-      });
-    }
-
-    // Allow Enter key (without Shift) in password textarea to submit form
-    if (elements.loginPasswordTextarea) {
-      elements.loginPasswordTextarea.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          elements.loginForm.dispatchEvent(new Event('submit', { cancelable: true }));
+          showToast('Incorrect password! (Password must be 2330)', 'error');
         }
       });
     }
@@ -890,7 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Logout Button Handler
     if (elements.logoutBtn) {
       elements.logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('ucsr_logged_in');
+        sessionStorage.removeItem('ucsr_logged_in');
         state.isLoggedIn = false;
         checkAuthStatus();
         showToast('Logged out successfully', 'success');
@@ -915,8 +909,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       if (elements.loginPage) elements.loginPage.style.display = 'flex';
       if (elements.appContainer) elements.appContainer.style.display = 'none';
-      if (elements.loginPasswordTextarea) {
-        setTimeout(() => elements.loginPasswordTextarea.focus(), 100);
+      if (elements.loginPasswordInput) {
+        setTimeout(() => elements.loginPasswordInput.focus(), 100);
       }
     }
   }
