@@ -17,21 +17,33 @@ router.get('/', async (req, res) => {
 // POST /api/drives - Create a new placement drive
 router.post('/', async (req, res) => {
   try {
-    const { companyName, driveDate, role, driveType, status, examStatus, driveLink, resumeLink } = req.body;
+    const { companyName, driveDate, role, driveType, status, examStatus, driveLink, resumeLink, hacktonName, hacktonHostedFrom, hacktonDate } = req.body;
 
-    if (!companyName || !companyName.trim()) {
-      return res.status(400).json({ error: 'Company Name is required' });
+    const trimmedCompany = companyName ? companyName.trim() : '';
+    const trimmedHacktonName = hacktonName ? hacktonName.trim() : '';
+
+    if (!trimmedCompany && !trimmedHacktonName) {
+      return res.status(400).json({ error: 'Please enter a Company Name or Hackton Name' });
     }
 
+    const isHackton = driveType === 'Hacktons' || Boolean(trimmedHacktonName);
+    const finalHacktonName = trimmedHacktonName || trimmedCompany;
+    const finalCompanyName = trimmedCompany || trimmedHacktonName;
+    const finalHacktonDate = hacktonDate ? new Date(hacktonDate) : (driveDate ? new Date(driveDate) : null);
+    const finalDriveDate = driveDate ? new Date(driveDate) : finalHacktonDate;
+
     const driveData = {
-      companyName: companyName.trim(),
-      driveDate: driveDate ? new Date(driveDate) : null,
+      companyName: finalCompanyName,
+      driveDate: finalDriveDate,
       role: role ? role.trim() : '',
-      driveType: driveType || 'Campus Drive',
+      driveType: driveType || (isHackton ? 'Hacktons' : 'Campus Drive'),
       status: status || 'Upcoming',
       examStatus: examStatus || 'Not Completed',
       driveLink: driveLink ? driveLink.trim() : '',
-      resumeLink: resumeLink ? resumeLink.trim() : ''
+      resumeLink: resumeLink ? resumeLink.trim() : '',
+      hacktonName: finalHacktonName,
+      hacktonHostedFrom: hacktonHostedFrom ? hacktonHostedFrom.trim() : '',
+      hacktonDate: finalHacktonDate
     };
 
     const newDrive = new Drive(driveData);
@@ -47,11 +59,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { companyName, driveDate, role, driveType, status, examStatus, driveLink, resumeLink } = req.body;
-
-    if (companyName !== undefined && !companyName.trim()) {
-      return res.status(400).json({ error: 'Company Name cannot be empty' });
-    }
+    const { companyName, driveDate, role, driveType, status, examStatus, driveLink, resumeLink, hacktonName, hacktonHostedFrom, hacktonDate } = req.body;
 
     const updateFields = {};
     if (companyName !== undefined) updateFields.companyName = companyName.trim();
@@ -62,6 +70,15 @@ router.put('/:id', async (req, res) => {
     if (examStatus !== undefined) updateFields.examStatus = examStatus;
     if (driveLink !== undefined) updateFields.driveLink = driveLink.trim();
     if (resumeLink !== undefined) updateFields.resumeLink = resumeLink.trim();
+    if (hacktonName !== undefined) {
+      updateFields.hacktonName = hacktonName.trim();
+      if (!companyName) updateFields.companyName = hacktonName.trim();
+    }
+    if (hacktonHostedFrom !== undefined) updateFields.hacktonHostedFrom = hacktonHostedFrom.trim();
+    if (hacktonDate !== undefined) {
+      updateFields.hacktonDate = hacktonDate ? new Date(hacktonDate) : null;
+      if (!driveDate) updateFields.driveDate = hacktonDate ? new Date(hacktonDate) : null;
+    }
 
     const updatedDrive = await Drive.findByIdAndUpdate(
       id,

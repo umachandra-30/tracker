@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
     mobileCloseBtn: document.getElementById('mobile-close-btn'),
     navItems: document.querySelectorAll('.nav-item'),
     viewTitle: document.getElementById('view-title'),
+    sidebarAddModalBtn: document.getElementById('sidebar-add-modal-btn'),
+    sidebarLogoutBtn: document.getElementById('sidebar-logout-btn'),
 
     // Search Input
     searchAllInput: document.getElementById('search-all-input'),
@@ -48,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sectionDashboard: document.getElementById('section-dashboard'),
     sectionCampus: document.getElementById('section-campus'),
     sectionBeyond: document.getElementById('section-beyond'),
+    sectionHacktons: document.getElementById('section-hacktons'),
     sectionAll: document.getElementById('section-all'),
     sectionResume: document.getElementById('section-resume'),
 
@@ -59,6 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
     emptyCampus: document.getElementById('empty-campus'),
     tbodyBeyond: document.getElementById('tbody-beyond'),
     emptyBeyond: document.getElementById('empty-beyond'),
+    tbodyHacktons: document.getElementById('tbody-hacktons'),
+    emptyHacktons: document.getElementById('empty-hacktons'),
     tbodyAll: document.getElementById('tbody-all'),
     emptyAll: document.getElementById('empty-all'),
     tbodyResume: document.getElementById('tbody-resume'),
@@ -81,6 +86,19 @@ document.addEventListener('DOMContentLoaded', () => {
     driveStatusSelect: document.getElementById('drive-status'),
     groupExamStatus: document.getElementById('group-exam-status'),
     examStatusSelect: document.getElementById('exam-status'),
+
+    // Dedicated Hackton Modal & Form Elements
+    openAddHacktonBtn: document.getElementById('open-add-hackton-btn'),
+    hacktonModal: document.getElementById('hackton-modal'),
+    hacktonModalTitle: document.getElementById('hackton-modal-title'),
+    hacktonModalCloseBtn: document.getElementById('hackton-modal-close-btn'),
+    hacktonModalCancelBtn: document.getElementById('hackton-modal-cancel-btn'),
+    hacktonModalSubmitText: document.getElementById('hackton-modal-submit-text'),
+    hacktonForm: document.getElementById('hackton-form'),
+    hacktonIdInput: document.getElementById('hackton-id'),
+    hacktonNameInput: document.getElementById('hackton-name-input'),
+    hacktonHostedFromInput: document.getElementById('hackton-hosted-from-input'),
+    hacktonDateInput: document.getElementById('hackton-date-input'),
 
     // Resume Modal & Form Elements
     resumeModal: document.getElementById('resume-modal'),
@@ -254,10 +272,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.error || 'Failed to add drive');
+        throw new Error(errData.error || 'Failed to add record');
       }
-      showToast(`Drive for "${data.companyName}" added`, 'success');
+      const title = data.hacktonName || data.companyName || 'Record';
+      showToast(`Record "${title}" added`, 'success');
       closeModal();
+      closeHacktonModal();
       await loadDrives(true); // Silent update without loading flash
     } catch (err) {
       showToast(err.message, 'error');
@@ -280,10 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.error || 'Failed to update drive');
+        throw new Error(errData.error || 'Failed to update record');
       }
-      showToast('Placement drive updated', 'success');
+      showToast('Record updated successfully', 'success');
       closeModal();
+      closeHacktonModal();
       closeResumeModal();
       await loadDrives(true); // Silent background sync
     } catch (err) {
@@ -302,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'DELETE'
       });
       if (!res.ok) throw new Error('Failed to delete drive');
-      showToast('Placement drive deleted', 'success');
+      showToast('Record deleted successfully', 'success');
       closeDeleteModal();
       await loadDrives(true); // Silent background sync
     } catch (err) {
@@ -328,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.sectionDashboard.style.display = 'none';
     elements.sectionCampus.style.display = 'none';
     elements.sectionBeyond.style.display = 'none';
+    elements.sectionHacktons.style.display = 'none';
     elements.sectionAll.style.display = 'none';
     elements.sectionResume.style.display = 'none';
 
@@ -335,6 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (viewName === 'dashboard') elements.sectionDashboard.style.display = 'block';
     else if (viewName === 'campus') elements.sectionCampus.style.display = 'block';
     else if (viewName === 'beyond') elements.sectionBeyond.style.display = 'block';
+    else if (viewName === 'hacktons') elements.sectionHacktons.style.display = 'block';
     else if (viewName === 'all') elements.sectionAll.style.display = 'block';
     else if (viewName === 'resume') elements.sectionResume.style.display = 'block';
 
@@ -347,6 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.currentView === 'dashboard') renderDashboard(today);
     else if (state.currentView === 'campus') renderCampusDrives();
     else if (state.currentView === 'beyond') renderBeyondDrives();
+    else if (state.currentView === 'hacktons') renderHacktonsView();
     else if (state.currentView === 'all') renderAllDrives();
     else if (state.currentView === 'resume') renderResumeView();
   }
@@ -371,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let campusCount = 0;
     let beyondCount = 0;
+    let hacktonsCount = 0;
     let examCompletedCount = 0;
     let interviewCount = 0;
     let selectedCount = 0;
@@ -379,6 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.drives.forEach(d => {
       const type = d.driveType || 'Campus Drive';
       if (type === 'Beyond Drive') beyondCount++;
+      else if (type === 'Hacktons') hacktonsCount++;
       else campusCount++;
 
       if (d.examStatus === 'Completed') examCompletedCount++;
@@ -394,6 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <tr><td class="stat-name">Total Drives</td><td class="stat-count">${state.drives.length}</td></tr>
           <tr><td class="stat-name">Campus Drives</td><td class="stat-count">${campusCount}</td></tr>
           <tr><td class="stat-name">Beyond Drives</td><td class="stat-count">${beyondCount}</td></tr>
+          <tr><td class="stat-name">Hacktons</td><td class="stat-count">${hacktonsCount}</td></tr>
           <tr><td class="stat-name">Exam Completed</td><td class="stat-count">${examCompletedCount}</td></tr>
           <tr><td class="stat-name">Interviews</td><td class="stat-count">${interviewCount}</td></tr>
           <tr><td class="stat-name">Selected</td><td class="stat-count">${selectedCount}</td></tr>
@@ -455,7 +482,85 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 4. All Drives View
+  // 4. Hacktons View
+  function renderHacktonsView() {
+    if (state.isLoading && !state.hasLoadedOnce) {
+      elements.emptyHacktons.style.display = 'none';
+      elements.tbodyHacktons.innerHTML = `<tr><td colspan="6">${renderLoadingUI(state.retryCount)}</td></tr>`;
+      return;
+    }
+
+    if (state.loadError && !state.hasLoadedOnce) {
+      elements.emptyHacktons.style.display = 'none';
+      elements.tbodyHacktons.innerHTML = `<tr><td colspan="6">${renderErrorUI(state.loadError)}</td></tr>`;
+      attachRetryListener();
+      return;
+    }
+
+    const hacktonDrives = state.drives.filter(d =>
+      (d.driveType || '') === 'Hacktons' || d.hacktonName || d.hacktonHostedFrom
+    );
+
+    if (hacktonDrives.length === 0) {
+      elements.tbodyHacktons.innerHTML = '';
+      elements.emptyHacktons.style.display = 'block';
+    } else {
+      elements.emptyHacktons.style.display = 'none';
+      renderHacktonTableRows(elements.tbodyHacktons, hacktonDrives);
+    }
+  }
+
+  function renderHacktonTableRows(tbodyElement, drivesList) {
+    tbodyElement.innerHTML = '';
+
+    drivesList.forEach((drive, index) => {
+      const tr = document.createElement('tr');
+
+      const hacktonNameText = drive.hacktonName && drive.hacktonName.trim() ? escapeHTML(drive.hacktonName) : (drive.companyName ? escapeHTML(drive.companyName) : '-');
+      const hostedFromText = drive.hacktonHostedFrom && drive.hacktonHostedFrom.trim() ? escapeHTML(drive.hacktonHostedFrom) : '-';
+      const hacktonDateText = drive.hacktonDate ? formatDate(drive.hacktonDate) : (drive.driveDate ? formatDate(drive.driveDate) : '-');
+
+      let statusOptionsHTML = STATUS_OPTIONS.map(opt =>
+        `<option value="${opt}" ${drive.status === opt ? 'selected' : ''}>${opt}</option>`
+      ).join('');
+
+      const statusSelectHTML = `
+        <select class="table-select status-select status-${slugify(drive.status)}" data-id="${drive._id}">
+          ${statusOptionsHTML}
+        </select>
+      `;
+
+      tr.innerHTML = `
+        <td>${index + 1}</td>
+        <td><strong>${hacktonNameText}</strong></td>
+        <td>${hostedFromText}</td>
+        <td>${hacktonDateText}</td>
+        <td>${statusSelectHTML}</td>
+        <td>
+          <button class="btn btn-secondary btn-sm edit-btn" data-id="${drive._id}">Edit</button>
+          <button class="btn btn-danger btn-sm delete-btn" data-id="${drive._id}">Delete</button>
+        </td>
+      `;
+
+      const statusSelect = tr.querySelector('.status-select');
+      statusSelect.addEventListener('change', async (e) => {
+        const newStatus = e.target.value;
+        await updateDrive(drive._id, { status: newStatus });
+      });
+
+      tr.querySelector('.edit-btn').addEventListener('click', () => {
+        openHacktonModal(drive);
+      });
+
+      tr.querySelector('.delete-btn').addEventListener('click', () => {
+        openDeleteModal(drive);
+      });
+
+      tbodyElement.appendChild(tr);
+    });
+  }
+
+  // 5. All Drives View
   function renderAllDrives() {
     if (state.isLoading && !state.hasLoadedOnce) {
       elements.emptyAll.style.display = 'none';
@@ -481,12 +586,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const category = (d.driveType || 'Campus Drive').toLowerCase();
         const status = (d.status || '').toLowerCase();
         const examStatus = (d.examStatus || '').toLowerCase();
+        const hacktonName = (d.hacktonName || '').toLowerCase();
+        const hacktonHostedFrom = (d.hacktonHostedFrom || '').toLowerCase();
 
         return company.includes(query) ||
                role.includes(query) ||
                category.includes(query) ||
                status.includes(query) ||
-               examStatus.includes(query);
+               examStatus.includes(query) ||
+               hacktonName.includes(query) ||
+               hacktonHostedFrom.includes(query);
       });
     }
 
@@ -521,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 5. Resume Section View
+  // 6. Resume Section View
   function renderResumeView() {
     if (state.isLoading && !state.hasLoadedOnce) {
       elements.emptyResume.style.display = 'none';
@@ -556,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       tr.innerHTML = `
         <td>${index + 1}</td>
-        <td><strong>${escapeHTML(drive.companyName)}</strong></td>
+        <td><strong>${escapeHTML(drive.companyName || drive.hacktonName || '-')}</strong></td>
         <td>${resumeLinkHTML}</td>
         <td>
           <button class="btn btn-secondary btn-sm upload-resume-btn" data-id="${drive._id}">${actionBtnText}</button>
@@ -579,10 +688,12 @@ document.addEventListener('DOMContentLoaded', () => {
     drivesList.forEach((drive, index) => {
       const tr = document.createElement('tr');
 
-      const countdownText = getCountdownText(drive.driveDate);
+      const countdownText = getCountdownText(drive.driveDate || drive.hacktonDate);
       const roleText = drive.role && drive.role.trim() ? escapeHTML(drive.role) : '-';
       const typeText = drive.driveType || 'Campus Drive';
-      const typeBadgeClass = typeText === 'Beyond Drive' ? 'beyond' : 'campus';
+      let typeBadgeClass = 'campus';
+      if (typeText === 'Beyond Drive') typeBadgeClass = 'beyond';
+      else if (typeText === 'Hacktons') typeBadgeClass = 'hacktons';
 
       let statusOptionsHTML = STATUS_OPTIONS.map(opt =>
         `<option value="${opt}" ${drive.status === opt ? 'selected' : ''}>${opt}</option>`
@@ -607,8 +718,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       tr.innerHTML = `
         <td>${index + 1}</td>
-        <td><strong>${escapeHTML(drive.companyName)}</strong></td>
-        <td>${formatDate(drive.driveDate)}</td>
+        <td><strong>${escapeHTML(drive.companyName || drive.hacktonName || '-')}</strong></td>
+        <td>${formatDate(drive.driveDate || drive.hacktonDate)}</td>
         <td>${roleText}</td>
         <td><span class="type-badge ${typeBadgeClass}">${escapeHTML(typeText)}</span></td>
         <td>${countdownText}</td>
@@ -633,7 +744,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       tr.querySelector('.edit-btn').addEventListener('click', () => {
-        openAddOrEditModal(drive);
+        if (drive.driveType === 'Hacktons') {
+          openHacktonModal(drive);
+        } else {
+          openAddOrEditModal(drive);
+        }
       });
 
       tr.querySelector('.delete-btn').addEventListener('click', () => {
@@ -678,7 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       elements.companyRoleInput.value = driveToEdit.role || '';
-      elements.driveTypeSelect.value = driveToEdit.driveType || 'Campus Drive';
+      elements.driveTypeSelect.value = (driveToEdit.driveType === 'Beyond Drive') ? 'Beyond Drive' : 'Campus Drive';
 
       elements.groupStatus.style.display = 'block';
       elements.groupExamStatus.style.display = 'block';
@@ -712,12 +827,52 @@ document.addEventListener('DOMContentLoaded', () => {
     state.editingDriveId = null;
   }
 
+  // --- Dedicated Hackton Modal Helpers ---
+
+  function openHacktonModal(hacktonToEdit = null) {
+    elements.hacktonForm.reset();
+
+    if (hacktonToEdit) {
+      state.editingHacktonId = hacktonToEdit._id;
+      elements.hacktonModalTitle.textContent = 'Edit Hackton';
+      elements.hacktonModalSubmitText.textContent = 'Update Hackton';
+      elements.hacktonIdInput.value = hacktonToEdit._id;
+      elements.hacktonNameInput.value = hacktonToEdit.hacktonName || hacktonToEdit.companyName || '';
+      elements.hacktonHostedFromInput.value = hacktonToEdit.hacktonHostedFrom || '';
+
+      const hDate = hacktonToEdit.hacktonDate || hacktonToEdit.driveDate;
+      if (hDate) {
+        const hd = new Date(hDate);
+        elements.hacktonDateInput.value = hd.toISOString().split('T')[0];
+      } else {
+        elements.hacktonDateInput.value = '';
+      }
+    } else {
+      state.editingHacktonId = null;
+      elements.hacktonModalTitle.textContent = '+ Add Hackton';
+      elements.hacktonModalSubmitText.textContent = 'Save Hackton';
+      elements.hacktonIdInput.value = '';
+      elements.hacktonNameInput.value = '';
+      elements.hacktonHostedFromInput.value = '';
+      elements.hacktonDateInput.value = '';
+    }
+
+    elements.hacktonModal.style.display = 'flex';
+    elements.hacktonNameInput.focus();
+  }
+
+  function closeHacktonModal() {
+    elements.hacktonModal.style.display = 'none';
+    elements.hacktonForm.reset();
+    state.editingHacktonId = null;
+  }
+
   // --- Dedicated Resume Modal Helpers ---
 
   function openResumeModal(drive) {
     state.editingResumeDriveId = drive._id;
     elements.resumeDriveIdInput.value = drive._id;
-    elements.resumeCompanyNameInput.value = drive.companyName || '';
+    elements.resumeCompanyNameInput.value = drive.companyName || drive.hacktonName || '';
     elements.resumeLinkInput.value = drive.resumeLink || '';
     elements.resumeModal.style.display = 'flex';
     elements.resumeLinkInput.focus();
@@ -731,7 +886,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openDeleteModal(drive) {
     state.deletingDriveId = drive._id;
-    elements.deleteWarningText.textContent = `Are you sure you want to delete "${drive.companyName}"?`;
+    elements.deleteWarningText.textContent = `Are you sure you want to delete "${drive.companyName || drive.hacktonName}"?`;
     elements.deleteModal.style.display = 'flex';
   }
 
@@ -780,6 +935,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     elements.openAddModalBtn.addEventListener('click', () => openAddOrEditModal());
+
+    if (elements.sidebarAddModalBtn) {
+      elements.sidebarAddModalBtn.addEventListener('click', () => {
+        closeSidebar();
+        if (state.currentView === 'hacktons') {
+          openHacktonModal();
+        } else {
+          openAddOrEditModal();
+        }
+      });
+    }
+
+    if (elements.openAddHacktonBtn) {
+      elements.openAddHacktonBtn.addEventListener('click', () => openHacktonModal());
+    }
+
     elements.modalCloseBtn.addEventListener('click', closeModal);
     elements.modalCancelBtn.addEventListener('click', closeModal);
 
@@ -793,7 +964,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const driveType = elements.driveTypeSelect.value;
 
       if (!companyName) {
-        showToast('Company Name is required', 'error');
+        showToast('Please enter a Company Name', 'error');
         return;
       }
 
@@ -815,7 +986,40 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Dedicated Resume Form Submit Handler
+    // Hackton Form Submit Handler
+    if (elements.hacktonForm) {
+      elements.hacktonModalCloseBtn.addEventListener('click', closeHacktonModal);
+      elements.hacktonModalCancelBtn.addEventListener('click', closeHacktonModal);
+      elements.hacktonForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const hacktonName = elements.hacktonNameInput.value.trim();
+        const hacktonHostedFrom = elements.hacktonHostedFromInput.value.trim();
+        const hacktonDate = elements.hacktonDateInput.value;
+
+        if (!hacktonName) {
+          showToast('Please enter a Hackton Name', 'error');
+          return;
+        }
+
+        const hacktonData = {
+          companyName: hacktonName,
+          hacktonName,
+          hacktonHostedFrom,
+          hacktonDate: hacktonDate || null,
+          driveDate: hacktonDate || null,
+          driveType: 'Hacktons'
+        };
+
+        if (state.editingHacktonId) {
+          await updateDrive(state.editingHacktonId, hacktonData);
+        } else {
+          hacktonData.status = 'Upcoming';
+          hacktonData.examStatus = 'Not Completed';
+          await createDrive(hacktonData);
+        }
+      });
+    }
     elements.resumeModalCloseBtn.addEventListener('click', closeResumeModal);
     elements.resumeModalCancelBtn.addEventListener('click', closeResumeModal);
     elements.resumeForm.addEventListener('submit', async (e) => {
@@ -881,18 +1085,26 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Logout Button Handler
+    // Logout Button Handlers (Topbar & Mobile Sidebar Hamburger Menu)
+    const handleLogout = () => {
+      closeSidebar();
+      sessionStorage.removeItem('ucsr_logged_in');
+      state.isLoggedIn = false;
+      checkAuthStatus();
+      showToast('Logged out successfully', 'success');
+    };
+
     if (elements.logoutBtn) {
-      elements.logoutBtn.addEventListener('click', () => {
-        sessionStorage.removeItem('ucsr_logged_in');
-        state.isLoggedIn = false;
-        checkAuthStatus();
-        showToast('Logged out successfully', 'success');
-      });
+      elements.logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    if (elements.sidebarLogoutBtn) {
+      elements.sidebarLogoutBtn.addEventListener('click', handleLogout);
     }
 
     window.addEventListener('click', (e) => {
       if (e.target === elements.driveModal) closeModal();
+      if (e.target === elements.hacktonModal) closeHacktonModal();
       if (e.target === elements.resumeModal) closeResumeModal();
       if (e.target === elements.deleteModal) closeDeleteModal();
     });

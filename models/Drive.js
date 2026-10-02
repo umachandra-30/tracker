@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const driveSchema = new mongoose.Schema({
   companyName: {
     type: String,
-    required: [true, 'Company name is required'],
+    default: '',
     trim: true
   },
   driveDate: {
@@ -17,7 +17,7 @@ const driveSchema = new mongoose.Schema({
   },
   driveType: {
     type: String,
-    enum: ['Campus Drive', 'Beyond Drive'],
+    enum: ['Campus Drive', 'Beyond Drive', 'Hacktons'],
     default: 'Campus Drive'
   },
   status: {
@@ -48,6 +48,20 @@ const driveSchema = new mongoose.Schema({
     type: String,
     default: '',
     trim: true
+  },
+  hacktonName: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  hacktonHostedFrom: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  hacktonDate: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

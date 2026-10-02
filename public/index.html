@@ -73,6 +73,11 @@
           <span>Beyond Drive</span>
         </button>
 
+        <button class="nav-item" data-view="hacktons">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+          <span>Hacktons</span>
+        </button>
+
         <button class="nav-item" data-view="all">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
           <span>All Drives</span>
@@ -83,6 +88,19 @@
           <span>Resume</span>
         </button>
       </nav>
+
+      <div class="sidebar-user-section">
+        <div class="user-badge sidebar-user-badge">
+          <span class="user-badge-icon">🎓</span>
+          <span class="user-badge-text">23BQ1A0539</span>
+        </div>
+        <button class="btn btn-primary sidebar-add-btn" id="sidebar-add-modal-btn">
+          + Add Drive
+        </button>
+        <button class="btn btn-secondary sidebar-logout-btn" id="sidebar-logout-btn">
+           Logout
+        </button>
+      </div>
     </aside>
 
     <!-- Main Content Area -->
@@ -185,6 +203,36 @@
           </div>
         </section>
 
+        <!-- SECTION 4: HACKTONS -->
+        <section class="page-section" id="section-hacktons" style="display: none;">
+          <div class="section-header section-header-with-action">
+            <h2>Hacktons</h2>
+            <button class="btn btn-primary" id="open-add-hackton-btn">
+              + Add Hackton
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="placement-table" id="table-hacktons">
+              <thead>
+                <tr>
+                  <th>S.No</th>
+                  <th>Hackton Name</th>
+                  <th>Hackton Hosted From</th>
+                  <th>Hackton Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-hacktons">
+                <!-- Rows generated dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <div class="empty-state-text" id="empty-hacktons" style="display: none;">
+            No Hackton records added yet.
+          </div>
+        </section>
+
         <!-- SECTION 5: ALL DRIVES -->
         <section class="page-section" id="section-all" style="display: none;">
           <div class="section-header section-header-with-action">
@@ -260,8 +308,8 @@
         <input type="hidden" id="drive-id" value="">
 
         <div class="form-group">
-          <label for="company-name" class="form-label required">Company Name *</label>
-          <input type="text" id="company-name" class="form-input" placeholder="e.g. ABC Technologies" required>
+          <label for="company-name" class="form-label" id="label-company-name">Company Name</label>
+          <input type="text" id="company-name" class="form-input" placeholder="e.g. ABC Technologies">
         </div>
 
         <div class="form-group">
@@ -308,6 +356,42 @@
           <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
           <button type="submit" class="btn btn-primary" id="modal-submit-btn">
             <span id="modal-submit-text">Save Drive</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dedicated Add / Edit Hackton Modal -->
+  <div class="modal-backdrop" id="hackton-modal" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="hackton-modal-title">+ Add Hackton</h3>
+        <button class="modal-close-btn" id="hackton-modal-close-btn" aria-label="Close modal">✕</button>
+      </div>
+
+      <form id="hackton-form">
+        <input type="hidden" id="hackton-id" value="">
+
+        <div class="form-group">
+          <label for="hackton-name-input" class="form-label">Hackton Name</label>
+          <input type="text" id="hackton-name-input" class="form-input" placeholder="e.g. Smart India Hackathon" required>
+        </div>
+
+        <div class="form-group">
+          <label for="hackton-hosted-from-input" class="form-label">Hackton Hosted From</label>
+          <input type="text" id="hackton-hosted-from-input" class="form-input" placeholder="e.g. AICTE / Devfolio">
+        </div>
+
+        <div class="form-group">
+          <label for="hackton-date-input" class="form-label">Hackton Date</label>
+          <input type="date" id="hackton-date-input" class="form-input">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="hackton-modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="hackton-modal-submit-btn">
+            <span id="hackton-modal-submit-text">Save Hackton</span>
           </button>
         </div>
       </form>
