@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const hacktonDrives = state.drives.filter(d =>
-      (d.driveType || '') === 'Hacktons' || d.hacktonName || d.hacktonHostedFrom
+      d.driveType === 'Hacktons' || (!d.driveType && Boolean(d.hacktonName || d.hacktonHostedFrom))
     );
 
     if (hacktonDrives.length === 0) {

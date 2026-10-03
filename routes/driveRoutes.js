@@ -26,23 +26,26 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Please enter a Company Name or Hackton Name' });
     }
 
-    const isHackton = driveType === 'Hacktons' || Boolean(trimmedHacktonName);
-    const finalHacktonName = trimmedHacktonName || trimmedCompany;
-    const finalCompanyName = trimmedCompany || trimmedHacktonName;
-    const finalHacktonDate = hacktonDate ? new Date(hacktonDate) : (driveDate ? new Date(driveDate) : null);
-    const finalDriveDate = driveDate ? new Date(driveDate) : finalHacktonDate;
+    const isHackton = driveType === 'Hacktons' || (Boolean(trimmedHacktonName) && driveType !== 'Campus Drive' && driveType !== 'Beyond Drive');
+
+    const finalDriveType = isHackton ? 'Hacktons' : (driveType || 'Campus Drive');
+    const finalCompanyName = isHackton ? (trimmedCompany || trimmedHacktonName) : trimmedCompany;
+    const finalHacktonName = isHackton ? (trimmedHacktonName || trimmedCompany) : '';
+    const finalHacktonHostedFrom = isHackton && hacktonHostedFrom ? hacktonHostedFrom.trim() : '';
+    const finalHacktonDate = isHackton ? (hacktonDate ? new Date(hacktonDate) : (driveDate ? new Date(driveDate) : null)) : null;
+    const finalDriveDate = driveDate ? new Date(driveDate) : (isHackton ? finalHacktonDate : null);
 
     const driveData = {
       companyName: finalCompanyName,
       driveDate: finalDriveDate,
       role: role ? role.trim() : '',
-      driveType: driveType || (isHackton ? 'Hacktons' : 'Campus Drive'),
+      driveType: finalDriveType,
       status: status || 'Upcoming',
       examStatus: examStatus || 'Not Completed',
       driveLink: driveLink ? driveLink.trim() : '',
       resumeLink: resumeLink ? resumeLink.trim() : '',
       hacktonName: finalHacktonName,
-      hacktonHostedFrom: hacktonHostedFrom ? hacktonHostedFrom.trim() : '',
+      hacktonHostedFrom: finalHacktonHostedFrom,
       hacktonDate: finalHacktonDate
     };
 
@@ -70,14 +73,21 @@ router.put('/:id', async (req, res) => {
     if (examStatus !== undefined) updateFields.examStatus = examStatus;
     if (driveLink !== undefined) updateFields.driveLink = driveLink.trim();
     if (resumeLink !== undefined) updateFields.resumeLink = resumeLink.trim();
-    if (hacktonName !== undefined) {
-      updateFields.hacktonName = hacktonName.trim();
-      if (!companyName) updateFields.companyName = hacktonName.trim();
-    }
-    if (hacktonHostedFrom !== undefined) updateFields.hacktonHostedFrom = hacktonHostedFrom.trim();
-    if (hacktonDate !== undefined) {
-      updateFields.hacktonDate = hacktonDate ? new Date(hacktonDate) : null;
-      if (!driveDate) updateFields.driveDate = hacktonDate ? new Date(hacktonDate) : null;
+
+    if (driveType === 'Campus Drive' || driveType === 'Beyond Drive') {
+      updateFields.hacktonName = '';
+      updateFields.hacktonHostedFrom = '';
+      updateFields.hacktonDate = null;
+    } else if (driveType === 'Hacktons' || hacktonName !== undefined) {
+      if (hacktonName !== undefined) {
+        updateFields.hacktonName = hacktonName.trim();
+        if (!companyName) updateFields.companyName = hacktonName.trim();
+      }
+      if (hacktonHostedFrom !== undefined) updateFields.hacktonHostedFrom = hacktonHostedFrom.trim();
+      if (hacktonDate !== undefined) {
+        updateFields.hacktonDate = hacktonDate ? new Date(hacktonDate) : null;
+        if (!driveDate) updateFields.driveDate = hacktonDate ? new Date(hacktonDate) : null;
+      }
     }
 
     const updatedDrive = await Drive.findByIdAndUpdate(
